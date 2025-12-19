@@ -30,14 +30,35 @@ function PartnerDashboard() {
           axios.get(`${API_URL}/transactions`),
           axios.get(`${API_URL}/categories`)
         ]);
-        setData(dashboardRes.data);
+        if (dashboardRes.data && typeof dashboardRes.data === 'object') {
+          setData(dashboardRes.data);
+        } else {
+          console.error('Dashboard API returned invalid data:', dashboardRes.data);
+          // Set empty structure to prevent crash
+          setData({
+            expenses: [],
+            drawings: [],
+            salary: null,
+            pendingClients: [],
+            freelancerPayments: [],
+            retainFund: { balance: 0 },
+            mainAccount: { balance: 0 }
+          });
+        }
+
         if (Array.isArray(txRes.data)) {
           setTransactions(txRes.data);
         } else {
           console.error('Transactions API returned non-array:', txRes.data);
           setTransactions([]);
         }
-        setCategories(catRes.data);
+        
+        if (Array.isArray(catRes.data)) {
+          setCategories(catRes.data);
+        } else {
+          console.error('Categories API returned non-array:', catRes.data);
+          setCategories([]);
+        }
       } catch (error) {
         console.error('Failed to fetch data', error);
       }

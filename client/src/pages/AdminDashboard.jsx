@@ -77,8 +77,19 @@ function AdminDashboard() {
         console.error('Transactions API returned non-array:', txRes.data);
         setTransactions([]);
       }
-      setDrawings(drawRes.data);
-      setCategories(catRes.data);
+      if (Array.isArray(drawRes.data)) {
+        setDrawings(drawRes.data);
+      } else {
+        console.error('Drawings API returned non-array:', drawRes.data);
+        setDrawings([]);
+      }
+      
+      if (Array.isArray(catRes.data)) {
+        setCategories(catRes.data);
+      } else {
+        console.error('Categories API returned non-array:', catRes.data);
+        setCategories([]);
+      }
     } catch (error) {
       console.error('Error fetching data', error);
     }
