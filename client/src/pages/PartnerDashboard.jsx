@@ -259,7 +259,7 @@ function PartnerDashboard() {
                   </div>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {data.drawings.length === 0 ? (
-                      <p style={{ color: 'var(--color-light-grey)', textAlign: 'center', padding: '2rem' }}>No drawings this month.</p>
+                      <p style={{ color: 'var(--color-light-grey)', textAlign: 'center', padding: '2rem' }}>No drawings found.</p>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {data.drawings.map(d => (

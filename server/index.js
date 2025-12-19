@@ -312,7 +312,8 @@ app.get('/api/dashboard/partner/:id', async (req, res) => {
 
     // Partner Drawings
     const drawings = await prisma.partnerDrawing.findMany({
-      where: { partnerId, date: { gte: startOfMonth, lte: endOfMonth } }
+      where: { partnerId },
+      orderBy: { date: 'desc' }
     });
 
     // Partner Salary
