@@ -209,7 +209,7 @@ app.get('/api/transactions', async (req, res) => {
       type: 'EXPENSE',
       amount: d.amount,
       description: `Partner Drawing - ${d.partner.name}`,
-      category: 'Partner Drawing',
+      category: 'partner_drawing',
       accountId: d.accountId,
       account: d.account,
       clientId: null,
