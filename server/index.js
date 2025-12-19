@@ -367,7 +367,24 @@ app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error sending index.html:', err);
-      res.status(500).send('Error loading application');
+      // Debugging info for the user
+      const fs = require('fs');
+      let debugInfo = `Error loading application.<br>Tried to serve: ${indexPath}<br>Error: ${err.message}<br>`;
+      
+      try {
+        debugInfo += `Current directory: ${__dirname}<br>`;
+        debugInfo += `Contents of current directory: ${fs.readdirSync(__dirname).join(', ')}<br>`;
+        const publicPath = path.join(__dirname, 'public');
+        if (fs.existsSync(publicPath)) {
+           debugInfo += `Contents of public directory: ${fs.readdirSync(publicPath).join(', ')}<br>`;
+        } else {
+           debugInfo += `Public directory does not exist at ${publicPath}<br>`;
+        }
+      } catch (e) {
+        debugInfo += `Error gathering debug info: ${e.message}`;
+      }
+      
+      res.status(500).send(debugInfo);
     }
   });
 });
