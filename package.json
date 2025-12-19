@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "postinstall": "cd client && npm install && cd ../server && npm install && npx prisma generate",
-    "build": "cd client && npm run build && cd .. && rm -rf server/public/* && cp -r client/dist/* server/public && cd server && npx prisma generate",
+    "build": "cd client && npm run build && cd .. && rm -rf server/public && mkdir -p server/public && cp -r client/dist/* server/public/ && cd server && npx prisma generate",
     "start": "cd server && node index.js"
   },
   "engines": {
