@@ -130,6 +130,7 @@ function PartnerDashboard() {
 
   const CategoryIcon = ({ name, size = 20 }) => {
     const IconComponent = Icons[name] || Icons.Circle;
+    if (!IconComponent) return null;
     return <IconComponent size={size} />;
   };
 
