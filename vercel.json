@@ -1,18 +1,13 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "server/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["server/public/**", "server/prisma/schema.prisma"]
-      }
+      "source": "/(.*)",
+      "destination": "/api/index"
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server/index.js"
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "server/public/**"
     }
-  ]
+  }
 }
