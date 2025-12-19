@@ -21,14 +21,17 @@ function PartnerDashboard() {
   const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
   const [filterType, setFilterType] = useState('ALL');
   const [filterCategory, setFilterCategory] = useState('ALL');
+  const [filterClient, setFilterClient] = useState('ALL');
+  const [clients, setClients] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, txRes, catRes] = await Promise.all([
+        const [dashboardRes, txRes, catRes, clientRes] = await Promise.all([
           axios.get(`${API_URL}/dashboard/partner/${id}`),
           axios.get(`${API_URL}/transactions`),
-          axios.get(`${API_URL}/categories`)
+          axios.get(`${API_URL}/categories`),
+          axios.get(`${API_URL}/clients`)
         ]);
         if (dashboardRes.data && typeof dashboardRes.data === 'object') {
           setData(dashboardRes.data);
@@ -58,6 +61,12 @@ function PartnerDashboard() {
         } else {
           console.error('Categories API returned non-array:', catRes.data);
           setCategories([]);
+        }
+
+        if (Array.isArray(clientRes.data)) {
+          setClients(clientRes.data);
+        } else {
+          setClients([]);
         }
       } catch (error) {
         console.error('Failed to fetch data', error);
@@ -111,6 +120,7 @@ function PartnerDashboard() {
     return safeTransactions.filter(t => {
       if (filterType !== 'ALL' && t.type !== filterType) return false;
       if (filterCategory !== 'ALL' && t.category !== filterCategory) return false;
+      if (filterClient !== 'ALL' && t.clientId !== parseInt(filterClient)) return false;
       
       const tDate = new Date(t.date);
       const now = new Date();
@@ -443,6 +453,11 @@ function PartnerDashboard() {
                     <option value="ALL">All Types</option>
                     <option value="INCOME">Income Only</option>
                     <option value="EXPENSE">Expense Only</option>
+                  </select>
+
+                  <select value={filterClient} onChange={e => setFilterClient(e.target.value)} style={{ width: 'auto', padding: '0.5rem' }}>
+                    <option value="ALL">All Clients</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
 
                   <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ width: 'auto', padding: '0.5rem' }}>

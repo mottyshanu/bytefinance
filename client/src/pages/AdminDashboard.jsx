@@ -583,12 +583,10 @@ function AdminDashboard() {
                       {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
                     </select>
 
-                    {transactionForm.type === 'INCOME' && (
-                      <select value={transactionForm.clientId} onChange={e => setTransactionForm({...transactionForm, clientId: e.target.value})}>
-                        <option value="">Select Client (Optional)</option>
-                        {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    )}
+                    <select value={transactionForm.clientId} onChange={e => setTransactionForm({...transactionForm, clientId: e.target.value})}>
+                      <option value="">Select Client (Optional)</option>
+                      {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
 
                     {(transactionForm.type === 'INCOME' || transactionForm.category === 'partner_drawing') && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
