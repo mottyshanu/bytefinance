@@ -482,6 +482,11 @@ app.delete('/api/drawing/:id', async (req, res) => {
 app.get('/api/dashboard/partner/:id', async (req, res) => {
   const { id } = req.params;
   const partnerId = parseInt(id);
+
+  if (isNaN(partnerId)) {
+    return res.status(400).json({ error: 'Invalid partner ID' });
+  }
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
