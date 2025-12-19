@@ -54,6 +54,17 @@ function AdminDashboard() {
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [editingDrawingId, setEditingDrawingId] = useState(null);
 
+  const handleAddClient = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/clients`, { name: newClient });
+      setNewClient('');
+      fetchData();
+    } catch (error) {
+      console.error('Error adding client:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
