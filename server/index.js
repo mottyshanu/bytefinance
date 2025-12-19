@@ -37,14 +37,34 @@ initAccounts();
 // Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log(`Login attempt for username: '${username}'`);
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
-    if (user && user.password === password) { // In production, use bcrypt
-      res.json({ id: user.id, username: user.username, role: user.role, name: user.name });
+    // Case-insensitive search for username
+    const user = await prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive'
+        }
+      }
+    });
+    
+    if (user) {
+      console.log(`User found: ${user.username}`);
+      // Direct password comparison (should be hashed in production)
+      if (user.password === password) {
+        console.log('Password match');
+        res.json({ id: user.id, username: user.username, role: user.role, name: user.name });
+      } else {
+        console.log(`Password mismatch. Expected: '${user.password}', Got: '${password}'`);
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
     } else {
+      console.log('User not found');
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
