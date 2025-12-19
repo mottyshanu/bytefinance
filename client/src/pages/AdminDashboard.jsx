@@ -259,6 +259,9 @@ function AdminDashboard() {
     });
   };
 
+  // Chart Data Preparation
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  
   const stats = {
     totalIncome: safeTransactions.filter(t => t.type === 'INCOME' && !t.isPending).reduce((sum, t) => sum + t.amount, 0),
     totalExpenses: safeTransactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0),
@@ -266,9 +269,6 @@ function AdminDashboard() {
     mainBalance: accounts.find(a => a.name === 'Main')?.balance || 0,
     retainBalance: accounts.find(a => a.name === 'Retain')?.balance || 0
   };
-
-  // Chart Data Preparation
-  const safeTransactions = Array.isArray(transactions) ? transactions : [];
   
   const monthlyData = safeTransactions.reduce((acc, t) => {
     const date = new Date(t.date);
