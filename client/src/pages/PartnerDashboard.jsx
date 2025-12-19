@@ -43,6 +43,12 @@ function PartnerDashboard() {
 
         console.log('Dashboard response:', dashboardRes.data);
 
+        // Check if response is HTML (which means proxy failed or 404 fallback)
+        if (typeof dashboardRes.data === 'string' && dashboardRes.data.trim().startsWith('<!doctype html>')) {
+          console.error('API returned HTML instead of JSON. Check API URL and Proxy configuration.');
+          throw new Error('API Configuration Error: Received HTML instead of JSON');
+        }
+
         if (dashboardRes.data && typeof dashboardRes.data === 'object') {
           setData(dashboardRes.data);
         } else {
@@ -124,6 +130,9 @@ function PartnerDashboard() {
     }
     return acc;
   }, []).reverse();
+
+  // Ensure we have at least some data for charts to prevent Recharts width(-1) error
+  const hasChartData = monthlyData.length > 0;
 
   const expenseCategoryData = safeTransactions
     .filter(t => t.type === 'EXPENSE')
@@ -262,49 +271,61 @@ function PartnerDashboard() {
                 {/* Charts */}
                 <div className="card col-span-2">
                   <h3 style={{ marginBottom: '1.5rem' }}>Income vs Expense</h3>
-                  <div style={{ height: '300px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grey)" vertical={false} />
-                        <XAxis dataKey="name" stroke="var(--color-light-grey)" />
-                        <YAxis stroke="var(--color-light-grey)" />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
-                          itemStyle={{ color: 'var(--color-white)' }}
-                        />
-                        <Legend />
-                        <Bar dataKey="income" fill="var(--color-success)" name="Income" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="expense" fill="var(--color-danger)" name="Expense" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div style={{ height: '300px', width: '100%' }}>
+                    {hasChartData ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={monthlyData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grey)" vertical={false} />
+                          <XAxis dataKey="name" stroke="var(--color-light-grey)" />
+                          <YAxis stroke="var(--color-light-grey)" />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
+                            itemStyle={{ color: 'var(--color-white)' }}
+                          />
+                          <Legend />
+                          <Bar dataKey="income" fill="var(--color-success)" name="Income" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="expense" fill="var(--color-danger)" name="Expense" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-light-grey)' }}>
+                        No transaction data available
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="card">
                   <h3 style={{ marginBottom: '1.5rem' }}>Expense Breakdown</h3>
-                  <div style={{ height: '300px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={expenseCategoryData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {expenseCategoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
-                          itemStyle={{ color: 'var(--color-white)' }}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <div style={{ height: '300px', width: '100%' }}>
+                    {expenseCategoryData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={expenseCategoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            {expenseCategoryData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
+                            itemStyle={{ color: 'var(--color-white)' }}
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-light-grey)' }}>
+                        No expense data available
+                      </div>
+                    )}
                   </div>
                 </div>
 
