@@ -333,7 +333,7 @@ function AdminDashboard() {
         fontSize: '0.9375rem'
       }}
     >
-      <Icon size={18} />
+      {Icon ? <Icon size={18} /> : <span style={{ width: 18, height: 18, display: 'inline-block' }} />}
       {label}
     </button>
   );
@@ -706,10 +706,10 @@ function AdminDashboard() {
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button onClick={() => handleEditTransaction(t)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Edit">
-                              <Icons.Edit size={16} color="var(--color-light-grey)" />
+                              <Icons.Edit2 size={16} color="var(--color-light-grey)" />
                             </button>
                             <button onClick={() => handleDeleteTransaction(t)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Delete">
-                              <Icons.Trash size={16} color="var(--color-danger)" />
+                              <Icons.Trash2 size={16} color="var(--color-danger)" />
                             </button>
                           </div>
                         </div>
@@ -918,10 +918,10 @@ function AdminDashboard() {
                           )}
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button onClick={() => handleEditDrawing(d)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Edit">
-                              <Icons.Edit size={16} color="var(--color-light-grey)" />
+                              <Icons.Edit2 size={16} color="var(--color-light-grey)" />
                             </button>
                             <button onClick={() => handleDeleteDrawing(d.id)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Delete">
-                              <Icons.Trash size={16} color="var(--color-danger)" />
+                              <Icons.Trash2 size={16} color="var(--color-danger)" />
                             </button>
                           </div>
                         </div>
