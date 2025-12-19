@@ -31,7 +31,12 @@ function PartnerDashboard() {
           axios.get(`${API_URL}/categories`)
         ]);
         setData(dashboardRes.data);
-        setTransactions(txRes.data);
+        if (Array.isArray(txRes.data)) {
+          setTransactions(txRes.data);
+        } else {
+          console.error('Transactions API returned non-array:', txRes.data);
+          setTransactions([]);
+        }
         setCategories(catRes.data);
       } catch (error) {
         console.error('Failed to fetch data', error);
@@ -51,7 +56,9 @@ function PartnerDashboard() {
   );
 
   // Chart Data Preparation
-  const monthlyData = transactions.reduce((acc, t) => {
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+  const monthlyData = safeTransactions.reduce((acc, t) => {
     const date = new Date(t.date);
     const month = date.toLocaleString('default', { month: 'short' });
     const existing = acc.find(d => d.name === month);
@@ -68,7 +75,7 @@ function PartnerDashboard() {
     return acc;
   }, []).reverse();
 
-  const expenseCategoryData = transactions
+  const expenseCategoryData = safeTransactions
     .filter(t => t.type === 'EXPENSE')
     .reduce((acc, t) => {
       const existing = acc.find(d => d.name === t.category);
@@ -80,7 +87,7 @@ function PartnerDashboard() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF4560'];
 
   const getFilteredTransactions = () => {
-    return transactions.filter(t => {
+    return safeTransactions.filter(t => {
       if (filterType !== 'ALL' && t.type !== filterType) return false;
       if (filterCategory !== 'ALL' && t.category !== filterCategory) return false;
       

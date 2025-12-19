@@ -71,7 +71,12 @@ function AdminDashboard() {
       setAccounts(accRes.data);
       setClients(cliRes.data);
       setPartners(partRes.data);
-      setTransactions(txRes.data);
+      if (Array.isArray(txRes.data)) {
+        setTransactions(txRes.data);
+      } else {
+        console.error('Transactions API returned non-array:', txRes.data);
+        setTransactions([]);
+      }
       setDrawings(drawRes.data);
       setCategories(catRes.data);
     } catch (error) {
@@ -219,7 +224,7 @@ function AdminDashboard() {
   };
 
   const getFilteredTransactions = () => {
-    return transactions.filter(t => {
+    return safeTransactions.filter(t => {
       // Filter by Type
       if (filterType !== 'ALL' && t.type !== filterType) return false;
 
@@ -244,15 +249,17 @@ function AdminDashboard() {
   };
 
   const stats = {
-    totalIncome: transactions.filter(t => t.type === 'INCOME' && !t.isPending).reduce((sum, t) => sum + t.amount, 0),
-    totalExpenses: transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0),
-    pendingIncome: transactions.filter(t => t.isPending && t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0),
+    totalIncome: safeTransactions.filter(t => t.type === 'INCOME' && !t.isPending).reduce((sum, t) => sum + t.amount, 0),
+    totalExpenses: safeTransactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0),
+    pendingIncome: safeTransactions.filter(t => t.isPending && t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0),
     mainBalance: accounts.find(a => a.name === 'Main')?.balance || 0,
     retainBalance: accounts.find(a => a.name === 'Retain')?.balance || 0
   };
 
   // Chart Data Preparation
-  const monthlyData = transactions.reduce((acc, t) => {
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  
+  const monthlyData = safeTransactions.reduce((acc, t) => {
     const date = new Date(t.date);
     const month = date.toLocaleString('default', { month: 'short' });
     const existing = acc.find(d => d.name === month);
@@ -269,7 +276,7 @@ function AdminDashboard() {
     return acc;
   }, []).reverse(); // Assuming transactions are desc
 
-  const expenseCategoryData = transactions
+  const expenseCategoryData = safeTransactions
     .filter(t => t.type === 'EXPENSE')
     .reduce((acc, t) => {
       const existing = acc.find(d => d.name === t.category);
