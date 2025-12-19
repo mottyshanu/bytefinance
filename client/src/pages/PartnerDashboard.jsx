@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from '../utils/icons';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 function PartnerDashboard() {
   const { id } = useParams();
@@ -33,7 +33,7 @@ function PartnerDashboard() {
       }
 
       try {
-        console.log('Fetching partner data for ID:', id);
+        console.log(`Fetching partner data for ID: ${id} from ${API_URL}`);
         const [dashboardRes, txRes, catRes, clientRes] = await Promise.all([
           axios.get(`${API_URL}/dashboard/partner/${id}`),
           axios.get(`${API_URL}/transactions`),
