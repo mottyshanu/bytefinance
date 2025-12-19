@@ -361,10 +361,6 @@ app.get('/api/dashboard/partner/:id', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('ByteFinance API is running');
-});
-
 // Serve React App for all non-API routes (for production)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
