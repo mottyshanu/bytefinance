@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as Icons from 'lucide-react';
+import { Icons } from '../utils/icons';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';

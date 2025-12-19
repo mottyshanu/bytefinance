@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as Icons from 'lucide-react';
+import { Icons } from '../utils/icons';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
