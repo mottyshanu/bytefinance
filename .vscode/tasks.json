@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Server",
+      "type": "shell",
+      "command": "cd server && npm run dev",
+      "isBackground": true,
+      "problemMatcher": ["$tsc-watch"],
+      "presentation": {
+        "group": "server"
+      }
+    },
+    {
+      "label": "Start Client",
+      "type": "shell",
+      "command": "cd client && npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "client"
+      }
+    },
+    {
+      "label": "Start All",
+      "dependsOn": ["Start Server", "Start Client"],
+      "problemMatcher": []
+    }
+  ]
+}

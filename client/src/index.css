@@ -1,0 +1,296 @@
+/* SF Pro Font System */
+:root {
+  /* Colors - Premium Dark Theme */
+  --color-black: #000000;
+  --color-dark-grey: #0A0A0A;
+  --color-medium-grey: #151515;
+  --color-grey: #1F1F1F;
+  --color-light-grey: #8E8E93;
+  --color-white: #FFFFFF;
+  --color-accent: #007AFF;
+  --color-danger: #FF3B30;
+  --color-success: #34C759;
+  --color-warning: #FF9500;
+  
+  /* SF Pro Typography */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Cascadia Code", "Courier New", monospace;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.6);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.7);
+  
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  font-family: var(--font-text);
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--color-white);
+  background-color: var(--color-black);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+  color: var(--color-white);
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-grey);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-light-grey);
+}
+
+input, select, textarea {
+  background-color: var(--color-medium-grey);
+  border: 1px solid var(--color-grey);
+  color: var(--color-white);
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-text);
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  background-color: var(--color-grey);
+}
+
+input::placeholder {
+  color: var(--color-light-grey);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-light-grey);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-text);
+}
+
+button {
+  border-radius: var(--radius-sm);
+  border: none;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: var(--font-text);
+  background-color: var(--color-accent);
+  color: var(--color-white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+button:hover {
+  background-color: #0051D5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.secondary {
+  background-color: var(--color-grey);
+  color: var(--color-white);
+}
+
+button.secondary:hover {
+  background-color: var(--color-medium-grey);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+button.danger {
+  background-color: var(--color-danger);
+}
+
+button.danger:hover {
+  background-color: #FF2D20;
+}
+
+.card {
+  background: linear-gradient(135deg, var(--color-dark-grey) 0%, var(--color-medium-grey) 100%);
+  border: 1px solid var(--color-grey);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+}
+
+.card:hover {
+  border-color: var(--color-light-grey);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+}
+
+h1 { font-size: 2.5rem; line-height: 1.1; }
+h2 { font-size: 1.875rem; line-height: 1.2; }
+h3 { font-size: 1.375rem; line-height: 1.3; }
+
+.text-muted { color: var(--color-light-grey); font-size: 0.9375rem; }
+.text-success { color: var(--color-success); }
+.text-danger { color: var(--color-danger); }
+.text-warning { color: var(--color-warning); }
+
+.grid-layout {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--color-grey);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+a {
+  color: var(--color-white);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--color-light-grey);
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .responsive-padding {
+    padding: 1rem !important;
+  }
+
+  .responsive-nav {
+    padding: 1rem !important;
+  }
+
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .responsive-flex-col {
+    flex-direction: column !important;
+  }
+
+  .card {
+    padding: 1rem !important;
+  }
+
+  h1 { font-size: 1.75rem !important; }
+  h2 { font-size: 1.5rem !important; }
+  h3 { font-size: 1.25rem !important; }
+
+  /* Make tables/lists scrollable horizontally if needed */
+  .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Adjust button sizes for touch targets */
+  button, input, select {
+    min-height: 44px;
+  }
+}
+
+/* Desktop Grid Layouts */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.split-grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .split-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .col-span-2 {
+    grid-column: span 1 !important;
+  }
+}

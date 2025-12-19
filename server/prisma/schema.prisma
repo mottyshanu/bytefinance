@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  role     String   // "ADMIN" or "PARTNER"
+  name     String?
+  drawings PartnerDrawing[]
+  salaries PartnerSalary[]
+}
+
+model Account {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique // "Main", "Retain"
+  balance      Float         @default(0)
+  transactions Transaction[]
+  drawings     PartnerDrawing[]
+}
+
+model Client {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  transactions Transaction[]
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  type  String // "INCOME" or "EXPENSE"
+  icon  String? // Name of the Lucide icon
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  type        String   // "INCOME" or "EXPENSE"
+  amount      Float
+  description String
+  category    String?
+  
+  // Relations
+  accountId   Int?
+  account     Account? @relation(fields: [accountId], references: [id])
+  
+  clientId    Int?
+  client      Client?  @relation(fields: [clientId], references: [id])
+  
+  isPending   Boolean  @default(false)
+}
+
+model PartnerDrawing {
+  id        Int      @id @default(autoincrement())
+  partner   User     @relation(fields: [partnerId], references: [id])
+  partnerId Int
+  
+  accountId Int?
+  account   Account? @relation(fields: [accountId], references: [id])
+  
+  amount    Float
+  date      DateTime
+  isRepaid  Boolean  @default(false)
+}
+
+model PartnerSalary {
+  id        Int      @id @default(autoincrement())
+  partner   User     @relation(fields: [partnerId], references: [id])
+  partnerId Int
+  amount    Float
+  month     Int
+  year      Int
+  isPaid    Boolean  @default(false)
+}
+
+model FreelancerPayment {
+  id             Int      @id @default(autoincrement())
+  freelancerName String
+  amount         Float
+  date           DateTime
+  description    String?
+}
+
+// Deprecated in favor of Account model, but kept for migration safety if needed, 
+// though we will likely drop it.
+model RetainFund {
+  id     Int   @id @default(autoincrement())
+  amount Float
+  month  Int
+  year   Int
+}
