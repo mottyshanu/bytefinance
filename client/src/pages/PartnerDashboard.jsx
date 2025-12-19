@@ -26,13 +26,23 @@ function PartnerDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!id || id === 'undefined') {
+        console.error('No partner ID provided');
+        navigate('/login');
+        return;
+      }
+
       try {
+        console.log('Fetching partner data for ID:', id);
         const [dashboardRes, txRes, catRes, clientRes] = await Promise.all([
           axios.get(`${API_URL}/dashboard/partner/${id}`),
           axios.get(`${API_URL}/transactions`),
           axios.get(`${API_URL}/categories`),
           axios.get(`${API_URL}/clients`)
         ]);
+
+        console.log('Dashboard response:', dashboardRes.data);
+
         if (dashboardRes.data && typeof dashboardRes.data === 'object') {
           setData(dashboardRes.data);
         } else {
@@ -70,6 +80,16 @@ function PartnerDashboard() {
         }
       } catch (error) {
         console.error('Failed to fetch data', error);
+        // Ensure we stop loading even if there's an error
+        setData({
+          expenses: [],
+          drawings: [],
+          salary: null,
+          pendingClients: [],
+          freelancerPayments: [],
+          retainFund: { balance: 0 },
+          mainAccount: { balance: 0 }
+        });
       }
     };
     fetchData();
