@@ -363,7 +363,13 @@ app.get('/api/dashboard/partner/:id', async (req, res) => {
 
 // Serve React App for all non-API routes (for production)
 app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error sending index.html:', err);
+      res.status(500).send('Error loading application');
+    }
+  });
 });
 
 if (require.main === module) {
