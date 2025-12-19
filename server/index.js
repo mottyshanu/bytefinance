@@ -87,33 +87,86 @@ app.post('/api/transaction', async (req, res) => {
   }
 });
 
-// Update Transaction (e.g. mark as paid)
+// Update Transaction
 app.put('/api/transaction/:id', async (req, res) => {
   const { id } = req.params;
-  const { isPending } = req.body;
+  const { date, type, amount, description, category, accountId, clientId, isPending } = req.body;
+  
   try {
-    const transaction = await prisma.transaction.update({
-      where: { id: parseInt(id) },
-      data: { isPending }
-    });
-    
-    // If marked as paid (not pending), update balance
-    if (isPending === false && transaction.accountId) {
-      const account = await prisma.account.findUnique({ where: { id: transaction.accountId } });
-      if (account) {
-        const newBalance = transaction.type === 'INCOME' 
-          ? account.balance + transaction.amount 
-          : account.balance - transaction.amount;
+    const oldTransaction = await prisma.transaction.findUnique({ where: { id: parseInt(id) } });
+    if (!oldTransaction) return res.status(404).json({ error: 'Transaction not found' });
+
+    // 1. Revert old balance effect if it wasn't pending and had an account
+    if (!oldTransaction.isPending && oldTransaction.accountId) {
+      const oldAccount = await prisma.account.findUnique({ where: { id: oldTransaction.accountId } });
+      if (oldAccount) {
+        const revertAmount = oldTransaction.type === 'INCOME' ? -oldTransaction.amount : oldTransaction.amount;
         await prisma.account.update({
-          where: { id: transaction.accountId },
-          data: { balance: newBalance }
+          where: { id: oldTransaction.accountId },
+          data: { balance: oldAccount.balance + revertAmount }
         });
       }
     }
 
-    res.json(transaction);
+    // 2. Update transaction
+    const updatedTransaction = await prisma.transaction.update({
+      where: { id: parseInt(id) },
+      data: {
+        date: date ? new Date(date) : undefined,
+        type,
+        amount: amount ? parseFloat(amount) : undefined,
+        description,
+        category,
+        accountId: accountId ? parseInt(accountId) : null,
+        clientId: clientId ? parseInt(clientId) : null,
+        isPending: isPending !== undefined ? isPending : undefined
+      }
+    });
+
+    // 3. Apply new balance effect if not pending and has account
+    // Note: We use the updated values (or fall back to old ones if not provided, but prisma update returns the full object)
+    if (!updatedTransaction.isPending && updatedTransaction.accountId) {
+      const newAccount = await prisma.account.findUnique({ where: { id: updatedTransaction.accountId } });
+      if (newAccount) {
+        const applyAmount = updatedTransaction.type === 'INCOME' ? updatedTransaction.amount : -updatedTransaction.amount;
+        await prisma.account.update({
+          where: { id: updatedTransaction.accountId },
+          data: { balance: newAccount.balance + applyAmount }
+        });
+      }
+    }
+
+    res.json(updatedTransaction);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to update transaction' });
+  }
+});
+
+// Delete Transaction
+app.delete('/api/transaction/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const transaction = await prisma.transaction.findUnique({ where: { id: parseInt(id) } });
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+
+    // Revert balance effect
+    if (!transaction.isPending && transaction.accountId) {
+      const account = await prisma.account.findUnique({ where: { id: transaction.accountId } });
+      if (account) {
+        const revertAmount = transaction.type === 'INCOME' ? -transaction.amount : transaction.amount;
+        await prisma.account.update({
+          where: { id: transaction.accountId },
+          data: { balance: account.balance + revertAmount }
+        });
+      }
+    }
+
+    await prisma.transaction.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Transaction deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete transaction' });
   }
 });
 
@@ -255,45 +308,112 @@ app.post('/api/categories', async (req, res) => {
   }
 });
 
-// Update Drawing (Mark as Repaid)
+// Update Drawing
 app.put('/api/drawing/:id', async (req, res) => {
   const { id } = req.params;
-  const { isRepaid } = req.body;
+  const { amount, date, accountId, isRepaid } = req.body;
+  
   try {
-    const drawing = await prisma.partnerDrawing.findUnique({ where: { id: parseInt(id) } });
-    if (!drawing) return res.status(404).json({ error: 'Drawing not found' });
+    const oldDrawing = await prisma.partnerDrawing.findUnique({ where: { id: parseInt(id) } });
+    if (!oldDrawing) return res.status(404).json({ error: 'Drawing not found' });
 
-    // If marking as repaid, add money back to account
-    if (isRepaid && !drawing.isRepaid && drawing.accountId) {
-      const account = await prisma.account.findUnique({ where: { id: drawing.accountId } });
-      if (account) {
+    // 1. Revert old balance effect
+    // Drawings are expenses (deductions) from the account.
+    // If it was repaid, the money was put back, so we take it out.
+    // If it wasn't repaid, the money was taken out, so we put it back.
+    if (oldDrawing.accountId) {
+      const oldAccount = await prisma.account.findUnique({ where: { id: oldDrawing.accountId } });
+      if (oldAccount) {
+        let revertAmount = 0;
+        if (oldDrawing.isRepaid) {
+           // It was repaid, meaning balance is "normal". But wait, the initial drawing reduced balance.
+           // Repaying increases it back.
+           // So net effect of a repaid drawing is 0 on the account ( -amount + amount ).
+           // Net effect of an unrepaid drawing is -amount.
+           
+           // Actually, let's stick to the logic:
+           // Initial creation: Balance - Amount
+           // Marking repaid: Balance + Amount
+           
+           // So if we are changing the drawing, we should first "undo" everything.
+           // If isRepaid was true: We added amount back. So we subtract it.
+           // AND we also subtract the initial deduction? No, we add it back.
+           
+           // Let's simplify:
+           // Current Balance = Base - Amount + (isRepaid ? Amount : 0)
+           // To revert to Base: Balance + Amount - (isRepaid ? Amount : 0)
+           
+           revertAmount = oldDrawing.amount - (oldDrawing.isRepaid ? oldDrawing.amount : 0);
+        } else {
+           // Not repaid. Balance = Base - Amount.
+           // Revert: Balance + Amount.
+           revertAmount = oldDrawing.amount;
+        }
+        
         await prisma.account.update({
-          where: { id: drawing.accountId },
-          data: { balance: account.balance + drawing.amount }
+          where: { id: oldDrawing.accountId },
+          data: { balance: oldAccount.balance + revertAmount }
         });
       }
     }
-    
-    // If marking as NOT repaid (undoing), deduct money again
-    if (!isRepaid && drawing.isRepaid && drawing.accountId) {
-      const account = await prisma.account.findUnique({ where: { id: drawing.accountId } });
-      if (account) {
-        await prisma.account.update({
-          where: { id: drawing.accountId },
-          data: { balance: account.balance - drawing.amount }
-        });
-      }
-    }
 
+    // 2. Update Drawing
     const updatedDrawing = await prisma.partnerDrawing.update({
       where: { id: parseInt(id) },
-      data: { isRepaid }
+      data: {
+        amount: amount ? parseFloat(amount) : undefined,
+        date: date ? new Date(date) : undefined,
+        accountId: accountId ? parseInt(accountId) : undefined,
+        isRepaid: isRepaid !== undefined ? isRepaid : undefined
+      }
     });
+
+    // 3. Apply new balance effect
+    if (updatedDrawing.accountId) {
+      const newAccount = await prisma.account.findUnique({ where: { id: updatedDrawing.accountId } });
+      if (newAccount) {
+        // Effect: -Amount + (isRepaid ? Amount : 0)
+        const applyAmount = -updatedDrawing.amount + (updatedDrawing.isRepaid ? updatedDrawing.amount : 0);
+        
+        await prisma.account.update({
+          where: { id: updatedDrawing.accountId },
+          data: { balance: newAccount.balance + applyAmount }
+        });
+      }
+    }
 
     res.json(updatedDrawing);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to update drawing' });
+  }
+});
+
+// Delete Drawing
+app.delete('/api/drawing/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const drawing = await prisma.partnerDrawing.findUnique({ where: { id: parseInt(id) } });
+    if (!drawing) return res.status(404).json({ error: 'Drawing not found' });
+
+    // Revert balance effect
+    if (drawing.accountId) {
+      const account = await prisma.account.findUnique({ where: { id: drawing.accountId } });
+      if (account) {
+        // Revert logic: Balance + Amount - (isRepaid ? Amount : 0)
+        const revertAmount = drawing.amount - (drawing.isRepaid ? drawing.amount : 0);
+        await prisma.account.update({
+          where: { id: drawing.accountId },
+          data: { balance: account.balance + revertAmount }
+        });
+      }
+    }
+
+    await prisma.partnerDrawing.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Drawing deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete drawing' });
   }
 });
 

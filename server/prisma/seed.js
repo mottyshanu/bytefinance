@@ -2,76 +2,51 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('Clearing database...');
+  // Delete in order to avoid foreign key constraints
+  await prisma.transaction.deleteMany({});
+  await prisma.partnerDrawing.deleteMany({});
+  await prisma.partnerSalary.deleteMany({});
+  await prisma.freelancerPayment.deleteMany({});
+  await prisma.client.deleteMany({});
+  await prisma.account.deleteMany({});
+  await prisma.user.deleteMany({});
+
+  console.log('Seeding users...');
+  
   // Create Admin
-  const admin = await prisma.user.upsert({
-    where: { username: 'admin' },
-    update: {},
-    create: {
-      username: 'admin',
-      password: 'adminpassword', // In production, hash this
+  await prisma.user.create({
+    data: {
+      username: 'hafeel11',
+      password: 'Hafeel@2913', // In production, hash this
       role: 'ADMIN',
-      name: 'Admin User'
+      name: 'Hafeel'
     },
   });
 
   // Create Partner
-  const partner = await prisma.user.upsert({
-    where: { username: 'partner' },
-    update: {},
-    create: {
-      username: 'partner',
-      password: 'partnerpassword',
+  await prisma.user.create({
+    data: {
+      username: 'Byte11',
+      password: 'Byte@111',
       role: 'PARTNER',
-      name: 'Partner User'
+      name: 'Byte Partner'
     },
   });
 
+  console.log('Seeding accounts...');
   // Create Accounts
-  const mainAccount = await prisma.account.upsert({
-    where: { name: 'Main' },
-    update: {},
-    create: { name: 'Main', balance: 0 }
-  });
+  await prisma.account.create({ data: { name: 'Main', balance: 0 } });
+  await prisma.account.create({ data: { name: 'Retain', balance: 0 } });
 
-  const retainAccount = await prisma.account.upsert({
-    where: { name: 'Retain' },
-    update: {},
-    create: { name: 'Retain', balance: 0 }
-  });
-
-  // Seed some data
-  /* Deprecated
-  await prisma.retainFund.create({
-    data: {
-      amount: 5000,
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear()
-    }
-  });
-  */
-
-  /*
-  await prisma.transaction.create({
-    data: {
-      date: new Date(),
-      type: 'EXPENSE',
-      amount: 150,
-      description: 'Office Supplies',
-      category: 'office',
-      accountId: mainAccount.id
-    }
-  });
-  */
-
-  console.log({ admin, partner, mainAccount, retainAccount });
+  console.log('Database seeded successfully.');
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .catch((e) => {
     console.error(e);
-    await prisma.$disconnect();
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });
