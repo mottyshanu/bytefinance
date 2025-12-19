@@ -190,15 +190,50 @@ app.delete('/api/transaction/:id', async (req, res) => {
   }
 });
 
-// Get Transactions
+// Get Transactions (Unified with Drawings)
 app.get('/api/transactions', async (req, res) => {
   try {
     const transactions = await prisma.transaction.findMany({
       include: { account: true, client: true },
-      orderBy: { date: 'desc' }
     });
-    res.json(transactions);
+
+    const drawings = await prisma.partnerDrawing.findMany({
+      include: { partner: true, account: true },
+    });
+
+    // Normalize Drawings to look like Transactions
+    const normalizedDrawings = drawings.map(d => ({
+      id: d.id,
+      originalId: d.id, // Keep original ID for editing/deleting
+      date: d.date,
+      type: 'EXPENSE',
+      amount: d.amount,
+      description: `Partner Drawing - ${d.partner.name}`,
+      category: 'Partner Drawing',
+      accountId: d.accountId,
+      account: d.account,
+      clientId: null,
+      client: null,
+      isPending: false, // Transaction pending logic is different from Drawing repayment
+      // Custom fields
+      isDrawing: true,
+      isRepaid: d.isRepaid,
+      partnerId: d.partnerId,
+      partner: d.partner
+    }));
+
+    // Add a flag to regular transactions
+    const normalizedTransactions = transactions.map(t => ({
+      ...t,
+      originalId: t.id,
+      isDrawing: false
+    }));
+
+    const combined = [...normalizedTransactions, ...normalizedDrawings].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    res.json(combined);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to fetch transactions' });
   }
 });
@@ -456,7 +491,7 @@ app.get('/api/dashboard/partner/:id', async (req, res) => {
 
     // Partner Drawings
     const drawings = await prisma.partnerDrawing.findMany({
-      where: { partnerId },
+      include: { partner: true },
       orderBy: { date: 'desc' }
     });
 

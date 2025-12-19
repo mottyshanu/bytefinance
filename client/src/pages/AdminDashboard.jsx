@@ -36,8 +36,11 @@ function AdminDashboard() {
     date: new Date().toISOString().split('T')[0],
     accountId: '',
     clientId: '',
+    partnerId: '',
     isPending: false
   });
+
+  const [editingType, setEditingType] = useState('TRANSACTION'); // 'TRANSACTION' or 'DRAWING'
 
   const [drawingForm, setDrawingForm] = useState({
     partnerId: '',
@@ -47,6 +50,9 @@ function AdminDashboard() {
   });
 
   const [newClient, setNewClient] = useState('');
+
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [editingDrawingId, setEditingDrawingId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -78,79 +84,138 @@ function AdminDashboard() {
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/transaction`, transactionForm);
+      if (transactionForm.category === 'partner_drawing') {
+        // Handle Drawing
+        const payload = {
+          partnerId: transactionForm.partnerId,
+          amount: transactionForm.amount,
+          date: transactionForm.date,
+          accountId: transactionForm.accountId,
+          isRepaid: !transactionForm.isPending // Checkbox "Pending" means NOT repaid
+        };
+
+        if (editingTransactionId && editingType === 'DRAWING') {
+           await axios.put(`${API_URL}/drawing/${editingTransactionId}`, payload);
+        } else {
+           await axios.post(`${API_URL}/drawing`, payload);
+        }
+      } else {
+        // Handle Regular Transaction
+        if (editingTransactionId && editingType === 'TRANSACTION') {
+          await axios.put(`${API_URL}/transaction/${editingTransactionId}`, transactionForm);
+        } else {
+          await axios.post(`${API_URL}/transaction`, transactionForm);
+        }
+      }
+      
+      setEditingTransactionId(null);
+      setEditingType('TRANSACTION');
       fetchData();
-      setTransactionForm({ ...transactionForm, amount: '', description: '', category: '' });
+      setTransactionForm({
+        type: 'EXPENSE',
+        amount: '',
+        description: '',
+        category: '',
+        date: new Date().toISOString().split('T')[0],
+        accountId: '',
+        clientId: '',
+        partnerId: '',
+        isPending: false
+      });
     } catch (error) {
-      alert('Failed to add transaction');
+      console.error(error);
+      alert('Failed to save transaction');
     }
+  };
+
+  const handleDeleteTransaction = async (tx) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+    try {
+      if (tx.isDrawing) {
+        await axios.delete(`${API_URL}/drawing/${tx.id}`);
+      } else {
+        await axios.delete(`${API_URL}/transaction/${tx.id}`);
+      }
+      fetchData();
+    } catch (error) {
+      alert('Failed to delete transaction');
+    }
+  };
+
+  const handleEditTransaction = (tx) => {
+    setEditingTransactionId(tx.id);
+    
+    if (tx.isDrawing) {
+      setEditingType('DRAWING');
+      setTransactionForm({
+        type: 'EXPENSE',
+        amount: tx.amount,
+        description: tx.description,
+        category: 'partner_drawing',
+        date: new Date(tx.date).toISOString().split('T')[0],
+        accountId: tx.accountId || '',
+        clientId: '',
+        partnerId: tx.partnerId,
+        isPending: !tx.isRepaid
+      });
+    } else {
+      setEditingType('TRANSACTION');
+      setTransactionForm({
+        type: tx.type,
+        amount: tx.amount,
+        description: tx.description,
+        category: tx.category,
+        date: new Date(tx.date).toISOString().split('T')[0],
+        accountId: tx.accountId || '',
+        clientId: tx.clientId || '',
+        partnerId: '',
+        isPending: tx.isPending
+      });
+    }
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDrawingSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/drawing`, drawingForm);
+      if (editingDrawingId) {
+        await axios.put(`${API_URL}/drawing/${editingDrawingId}`, drawingForm);
+        setEditingDrawingId(null);
+      } else {
+        await axios.post(`${API_URL}/drawing`, drawingForm);
+      }
       fetchData();
-      setDrawingForm({ ...drawingForm, amount: '' });
+      setDrawingForm({
+        partnerId: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        accountId: ''
+      });
     } catch (error) {
-      alert('Failed to record drawing');
+      alert('Failed to save drawing');
     }
   };
 
-  const handleAddClient = async (e) => {
-    e.preventDefault();
-    if (!newClient.trim()) return;
+  const handleDeleteDrawing = async (id) => {
+    if (!confirm('Are you sure you want to delete this drawing?')) return;
     try {
-      await axios.post(`${API_URL}/clients`, { name: newClient });
+      await axios.delete(`${API_URL}/drawing/${id}`);
       fetchData();
-      setNewClient('');
     } catch (error) {
-      alert('Failed to add client');
+      alert('Failed to delete drawing');
     }
   };
 
-  const handleAddCategory = async (e) => {
-    e.preventDefault();
-    if (!newCategory.name.trim()) return;
-    try {
-      await axios.post(`${API_URL}/categories`, newCategory);
-      fetchData();
-      setNewCategory({ name: '', type: 'EXPENSE' });
-      setShowAddCategory(false);
-    } catch (error) {
-      alert('Failed to add category');
-    }
-  };
-
-  const handleAddPartner = async () => {
-    if (!newPartnerName.trim()) return;
-    try {
-      const res = await axios.post(`${API_URL}/partners`, { name: newPartnerName });
-      await fetchData(); // Refresh partners list
-      setDrawingForm({ ...drawingForm, partnerId: res.data.id }); // Auto-select new partner
-      setNewPartnerName('');
-      setShowAddPartner(false);
-    } catch (error) {
-      alert('Failed to add partner');
-    }
-  };
-
-  const markAsPaid = async (id) => {
-    try {
-      await axios.put(`${API_URL}/transaction/${id}`, { isPending: false });
-      fetchData();
-    } catch (error) {
-      alert('Failed to update transaction');
-    }
-  };
-
-  const markDrawingRepaid = async (id, isRepaid) => {
-    try {
-      await axios.put(`${API_URL}/drawing/${id}`, { isRepaid });
-      fetchData();
-    } catch (error) {
-      alert('Failed to update drawing status');
-    }
+  const handleEditDrawing = (d) => {
+    setEditingDrawingId(d.id);
+    setDrawingForm({
+      partnerId: d.partnerId,
+      amount: d.amount,
+      date: new Date(d.date).toISOString().split('T')[0],
+      accountId: d.accountId || ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getFilteredTransactions = () => {
@@ -411,7 +476,7 @@ function AdminDashboard() {
             {activeTab === 'transactions' && (
               <div className="split-grid">
                 <div className="card">
-                  <h2 style={{ marginBottom: '1.5rem' }}>New Transaction</h2>
+                  <h2 style={{ marginBottom: '1.5rem' }}>{editingTransactionId ? 'Edit Transaction' : 'New Transaction'}</h2>
                   <form onSubmit={handleTransactionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                       <button 
@@ -435,7 +500,10 @@ function AdminDashboard() {
                     </div>
                     
                     <input type="number" placeholder="Amount (₹)" value={transactionForm.amount} onChange={e => setTransactionForm({...transactionForm, amount: e.target.value})} required />
-                    <input type="text" placeholder="Description" value={transactionForm.description} onChange={e => setTransactionForm({...transactionForm, description: e.target.value})} required />
+                    
+                    {transactionForm.category !== 'partner_drawing' && (
+                      <input type="text" placeholder="Description" value={transactionForm.description} onChange={e => setTransactionForm({...transactionForm, description: e.target.value})} required />
+                    )}
                     
                     <select 
                       value={transactionForm.category} 
@@ -459,6 +527,13 @@ function AdminDashboard() {
                       <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--color-accent)' }}>+ Add New Category</option>
                     </select>
 
+                    {transactionForm.category === 'partner_drawing' && (
+                      <select value={transactionForm.partnerId} onChange={e => setTransactionForm({...transactionForm, partnerId: e.target.value})} required>
+                        <option value="">Select Partner</option>
+                        {partners.map(p => <option key={p.id} value={p.id}>{p.name || p.username}</option>)}
+                      </select>
+                    )}
+
                     {showAddCategory && (
                       <div style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem', background: 'var(--color-medium-grey)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-grey)' }}>
                         <input 
@@ -479,16 +554,17 @@ function AdminDashboard() {
                     </select>
 
                     {transactionForm.type === 'INCOME' && (
-                      <>
-                        <select value={transactionForm.clientId} onChange={e => setTransactionForm({...transactionForm, clientId: e.target.value})}>
-                          <option value="">Select Client (Optional)</option>
-                          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                      <select value={transactionForm.clientId} onChange={e => setTransactionForm({...transactionForm, clientId: e.target.value})}>
+                        <option value="">Select Client (Optional)</option>
+                        {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    )}
+
+                    {(transactionForm.type === 'INCOME' || transactionForm.category === 'partner_drawing') && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                           <input type="checkbox" checked={transactionForm.isPending} onChange={e => setTransactionForm({...transactionForm, isPending: e.target.checked})} />
-                          Mark as Pending Payment
+                          {transactionForm.category === 'partner_drawing' ? 'Mark as Pending Return' : 'Mark as Pending Payment'}
                         </label>
-                      </>
                     )}
 
                     <input type="date" value={transactionForm.date} onChange={e => setTransactionForm({...transactionForm, date: e.target.value})} required />
@@ -547,7 +623,7 @@ function AdminDashboard() {
                     {getFilteredTransactions().map(t => {
                       const catData = (EXPENSE_CATEGORIES.find(c => c.value === t.category) || INCOME_CATEGORIES.find(c => c.value === t.category));
                       return (
-                      <div key={t.id} style={{ 
+                      <div key={`${t.isDrawing ? 'd' : 't'}-${t.id}`} style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
@@ -573,16 +649,39 @@ function AdminDashboard() {
                             <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{t.description}</div>
                             <div style={{ fontSize: '0.8125rem', color: 'var(--color-light-grey)' }}>
                               {new Date(t.date).toLocaleDateString()} • {getCategoryLabel(t.category, t.type)} • {t.account?.name}
+                              {t.isDrawing && (
+                                <span style={{ 
+                                  marginLeft: '0.5rem', 
+                                  padding: '0.1rem 0.4rem', 
+                                  borderRadius: '4px', 
+                                  fontSize: '0.7rem', 
+                                  backgroundColor: t.isRepaid ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255, 149, 0, 0.2)',
+                                  color: t.isRepaid ? 'var(--color-success)' : 'var(--color-warning)',
+                                  fontWeight: 600
+                                }}>
+                                  {t.isRepaid ? 'RETURNED' : 'PENDING'}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <div style={{ 
-                          fontSize: '1.125rem', 
-                          fontWeight: 700, 
-                          color: t.type === 'INCOME' ? 'var(--color-success)' : 'var(--color-danger)',
-                          fontFamily: 'var(--font-display)'
-                        }}>
-                          {t.type === 'INCOME' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ 
+                            fontSize: '1.125rem', 
+                            fontWeight: 700, 
+                            color: t.type === 'INCOME' ? 'var(--color-success)' : 'var(--color-danger)',
+                            fontFamily: 'var(--font-display)'
+                          }}>
+                            {t.type === 'INCOME' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button onClick={() => handleEditTransaction(t)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Edit">
+                              <Icons.Edit2 size={16} color="var(--color-light-grey)" />
+                            </button>
+                            <button onClick={() => handleDeleteTransaction(t)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Delete">
+                              <Icons.Trash2 size={16} color="var(--color-danger)" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                       );
@@ -653,7 +752,7 @@ function AdminDashboard() {
             {activeTab === 'drawings' && (
               <div className="split-grid">
                 <div className="card">
-                  <h2 style={{ marginBottom: '1.5rem' }}>Record Partner Drawing</h2>
+                  <h2 style={{ marginBottom: '1.5rem' }}>{editingDrawingId ? 'Edit Partner Drawing' : 'Record Partner Drawing'}</h2>
                   <form onSubmit={handleDrawingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <select 
                       value={drawingForm.partnerId} 
@@ -695,8 +794,19 @@ function AdminDashboard() {
                     <input type="date" value={drawingForm.date} onChange={e => setDrawingForm({...drawingForm, date: e.target.value})} required />
 
                     <button type="submit">
-                      <Icons.Plus size={16} style={{ marginRight: '0.5rem', display: 'inline' }} />Record Drawing
+                      <Icons.Plus size={16} style={{ marginRight: '0.5rem', display: 'inline' }} />{editingDrawingId ? 'Update Drawing' : 'Record Drawing'}
                     </button>
+                    {editingDrawingId && (
+                      <button type="button" className="secondary" onClick={() => {
+                        setEditingDrawingId(null);
+                        setDrawingForm({
+                          partnerId: '',
+                          amount: '',
+                          date: new Date().toISOString().split('T')[0],
+                          accountId: ''
+                        });
+                      }}>Cancel Edit</button>
+                    )}
                   </form>
                 </div>
 
@@ -776,6 +886,14 @@ function AdminDashboard() {
                               <Icons.Check size={18} color="white" />
                             </button>
                           )}
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button onClick={() => handleEditDrawing(d)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Edit">
+                              <Icons.Edit2 size={16} color="var(--color-light-grey)" />
+                            </button>
+                            <button onClick={() => handleDeleteDrawing(d.id)} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Delete">
+                              <Icons.Trash2 size={16} color="var(--color-danger)" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

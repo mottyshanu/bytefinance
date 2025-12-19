@@ -255,7 +255,7 @@ function PartnerDashboard() {
                     <div style={{ padding: '0.5rem', background: 'rgba(10, 132, 255, 0.1)', borderRadius: '8px' }}>
                       <Icons.CreditCard size={20} color="var(--color-accent)" />
                     </div>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>My Drawings</h3>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>All Partner Drawings</h3>
                   </div>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {data.drawings.length === 0 ? (
@@ -274,7 +274,9 @@ function PartnerDashboard() {
                           }}>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>₹{d.amount.toLocaleString()}</div>
-                              <div style={{ fontSize: '0.8125rem', color: 'var(--color-light-grey)' }}>{new Date(d.date).toLocaleDateString()}</div>
+                              <div style={{ fontSize: '0.8125rem', color: 'var(--color-light-grey)' }}>
+                                <span style={{ color: 'var(--color-white)', fontWeight: 600 }}>{d.partner?.name || 'Unknown'}</span> • {new Date(d.date).toLocaleDateString()}
+                              </div>
                             </div>
                             <span style={{ 
                               padding: '0.25rem 0.75rem', 
@@ -432,7 +434,7 @@ function PartnerDashboard() {
                   {getFilteredTransactions().map(t => {
                     const catData = (EXPENSE_CATEGORIES.find(c => c.value === t.category) || INCOME_CATEGORIES.find(c => c.value === t.category));
                     return (
-                    <div key={t.id} style={{ 
+                    <div key={`${t.isDrawing ? 'd' : 't'}-${t.id}`} style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
                       alignItems: 'center',
@@ -458,6 +460,19 @@ function PartnerDashboard() {
                           <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{t.description}</div>
                           <div style={{ fontSize: '0.8125rem', color: 'var(--color-light-grey)' }}>
                             {new Date(t.date).toLocaleDateString()} • {getCategoryLabel(t.category, t.type)} • {t.account?.name}
+                            {t.isDrawing && (
+                              <span style={{ 
+                                marginLeft: '0.5rem', 
+                                padding: '0.1rem 0.4rem', 
+                                borderRadius: '4px', 
+                                fontSize: '0.7rem', 
+                                backgroundColor: t.isRepaid ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255, 149, 0, 0.2)',
+                                color: t.isRepaid ? 'var(--color-success)' : 'var(--color-warning)',
+                                fontWeight: 600
+                               }}>
+                                {t.isRepaid ? 'RETURNED' : 'PENDING'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

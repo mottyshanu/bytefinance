@@ -13,6 +13,7 @@ export const EXPENSE_CATEGORIES = [
   { value: 'insurance', label: 'Insurance', icon: 'Shield' },
   { value: 'training', label: 'Training & Education', icon: 'GraduationCap' },
   { value: 'entertainment', label: 'Client Entertainment', icon: 'Coffee' },
+  { value: 'partner_drawing', label: 'Partner Drawing', icon: 'Wallet' },
   { value: 'misc', label: 'Miscellaneous', icon: 'MoreHorizontal' }
 ];
 
