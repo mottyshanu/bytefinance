@@ -542,6 +542,31 @@ app.get('/api/dashboard/partner/:id', async (req, res) => {
   }
 });
 
+// Debug route to check file system
+app.get('/api/debug-files', (req, res) => {
+  const fs = require('fs');
+  const publicPath = path.join(__dirname, 'public');
+  const assetsPath = path.join(publicPath, 'assets');
+  
+  let info = {
+    dirname: __dirname,
+    publicPath,
+    publicExists: fs.existsSync(publicPath),
+    publicFiles: [],
+    assetsExists: fs.existsSync(assetsPath),
+    assetsFiles: []
+  };
+
+  if (info.publicExists) {
+    info.publicFiles = fs.readdirSync(publicPath);
+  }
+  if (info.assetsExists) {
+    info.assetsFiles = fs.readdirSync(assetsPath);
+  }
+
+  res.json(info);
+});
+
 // Serve React App for all non-API routes (for production)
 app.get(/^(?!\/api).*/, (req, res) => {
   const indexPath = path.join(__dirname, 'public', 'index.html');
