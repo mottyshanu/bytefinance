@@ -19,13 +19,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Accounts if not exist
 const initAccounts = async () => {
-  const accounts = ['Main', 'Retain'];
-  for (const name of accounts) {
-    const acc = await prisma.account.findUnique({ where: { name } });
-    if (!acc) {
-      await prisma.account.create({ data: { name } });
-      console.log(`Created account: ${name}`);
+  try {
+    const accounts = ['Main', 'Retain'];
+    for (const name of accounts) {
+      const acc = await prisma.account.findUnique({ where: { name } });
+      if (!acc) {
+        await prisma.account.create({ data: { name } });
+        console.log(`Created account: ${name}`);
+      }
     }
+  } catch (error) {
+    console.error('Error initializing accounts:', error);
   }
 };
 initAccounts();
@@ -366,9 +370,11 @@ app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
 
