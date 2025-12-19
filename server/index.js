@@ -18,21 +18,21 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Accounts if not exist
-const initAccounts = async () => {
-  try {
-    const accounts = ['Main', 'Retain'];
-    for (const name of accounts) {
-      const acc = await prisma.account.findUnique({ where: { name } });
-      if (!acc) {
-        await prisma.account.create({ data: { name } });
-        console.log(`Created account: ${name}`);
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing accounts:', error);
-  }
-};
-initAccounts();
+// const initAccounts = async () => {
+//   try {
+//     const accounts = ['Main', 'Retain'];
+//     for (const name of accounts) {
+//       const acc = await prisma.account.findUnique({ where: { name } });
+//       if (!acc) {
+//         await prisma.account.create({ data: { name } });
+//         console.log(`Created account: ${name}`);
+//       }
+//     }
+//   } catch (error) {
+//     console.error('Error initializing accounts:', error);
+//   }
+// };
+// initAccounts();
 
 // Login
 app.post('/api/login', async (req, res) => {
