@@ -114,34 +114,39 @@ function PartnerDashboard() {
   // Chart Data Preparation
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
-  const monthlyData = safeTransactions.reduce((acc, t) => {
+  // Ensure we have valid data before processing
+  const monthlyData = safeTransactions.length > 0 ? safeTransactions.reduce((acc, t) => {
+    if (!t || !t.date) return acc;
     const date = new Date(t.date);
+    if (isNaN(date.getTime())) return acc;
+    
     const month = date.toLocaleString('default', { month: 'short' });
     const existing = acc.find(d => d.name === month);
     if (existing) {
-      if (t.type === 'INCOME') existing.income += t.amount;
-      else existing.expense += t.amount;
+      if (t.type === 'INCOME') existing.income += (t.amount || 0);
+      else existing.expense += (t.amount || 0);
     } else {
       acc.push({
         name: month,
-        income: t.type === 'INCOME' ? t.amount : 0,
-        expense: t.type === 'EXPENSE' ? t.amount : 0
+        income: t.type === 'INCOME' ? (t.amount || 0) : 0,
+        expense: t.type === 'EXPENSE' ? (t.amount || 0) : 0
       });
     }
     return acc;
-  }, []).reverse();
+  }, []).reverse() : [];
 
   // Ensure we have at least some data for charts to prevent Recharts width(-1) error
   const hasChartData = monthlyData.length > 0;
 
-  const expenseCategoryData = safeTransactions
+  const expenseCategoryData = safeTransactions.length > 0 ? safeTransactions
     .filter(t => t.type === 'EXPENSE')
     .reduce((acc, t) => {
+      if (!t || !t.category) return acc;
       const existing = acc.find(d => d.name === t.category);
-      if (existing) existing.value += t.amount;
-      else acc.push({ name: t.category, value: t.amount });
+      if (existing) existing.value += (t.amount || 0);
+      else acc.push({ name: t.category, value: (t.amount || 0) });
       return acc;
-    }, []);
+    }, []) : [];
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF4560'];
 
