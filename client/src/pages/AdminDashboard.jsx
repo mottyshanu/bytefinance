@@ -5,12 +5,14 @@ import { Icons } from '../utils/icons';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
+import { DashboardSkeleton } from '../components/Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [clients, setClients] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -54,6 +56,30 @@ function AdminDashboard() {
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [editingDrawingId, setEditingDrawingId] = useState(null);
 
+  const handleAddCategory = async () => {
+    if (!newCategory.name) return;
+    try {
+      await axios.post(`${API_URL}/categories`, { ...newCategory, icon: 'Circle' });
+      setNewCategory({ name: '', type: 'EXPENSE' });
+      setShowAddCategory(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding category:', error);
+    }
+  };
+
+  const handleAddPartner = async () => {
+    if (!newPartnerName) return;
+    try {
+      await axios.post(`${API_URL}/partners`, { name: newPartnerName });
+      setNewPartnerName('');
+      setShowAddPartner(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding partner:', error);
+    }
+  };
+
   const handleAddClient = async (e) => {
     e.preventDefault();
     try {
@@ -70,6 +96,7 @@ function AdminDashboard() {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [accRes, cliRes, partRes, txRes, drawRes, catRes] = await Promise.all([
         axios.get(`${API_URL}/accounts`),
@@ -103,6 +130,8 @@ function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error fetching data', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -338,6 +367,28 @@ function AdminDashboard() {
     </button>
   );
 
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-black)', color: 'var(--color-white)' }}>
+      <nav className="responsive-nav" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '1rem 2rem', 
+        background: 'rgba(0,0,0,0.85)', 
+        backdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: '1px solid var(--color-grey)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ fontSize: '1.375rem', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+          ByteFinance <span style={{ fontWeight: 400, fontSize: '0.75em', color: 'var(--color-light-grey)' }}>Admin</span>
+        </div>
+      </nav>
+      <DashboardSkeleton />
+    </div>
+  );
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-black)', color: 'var(--color-white)' }}>
       {/* Header */}
@@ -454,49 +505,61 @@ function AdminDashboard() {
                 <div className="dashboard-grid">
                   <div className="card">
                     <h3 style={{ marginBottom: '1.5rem' }}>Income vs Expense</h3>
-                    <div style={{ height: '300px' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={monthlyData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grey)" vertical={false} />
-                          <XAxis dataKey="name" stroke="var(--color-light-grey)" />
-                          <YAxis stroke="var(--color-light-grey)" />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
-                            itemStyle={{ color: 'var(--color-white)' }}
-                          />
-                          <Legend />
-                          <Bar dataKey="income" fill="var(--color-success)" name="Income" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="expense" fill="var(--color-danger)" name="Expense" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <div style={{ height: '300px', width: '100%' }}>
+                      {monthlyData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={monthlyData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grey)" vertical={false} />
+                            <XAxis dataKey="name" stroke="var(--color-light-grey)" />
+                            <YAxis stroke="var(--color-light-grey)" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
+                              itemStyle={{ color: 'var(--color-white)' }}
+                            />
+                            <Legend />
+                            <Bar dataKey="income" fill="var(--color-success)" name="Income" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="expense" fill="var(--color-danger)" name="Expense" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-light-grey)' }}>
+                          No transaction data available
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="card">
                     <h3 style={{ marginBottom: '1.5rem' }}>Expense Breakdown</h3>
-                    <div style={{ height: '300px' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={expenseCategoryData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {expenseCategoryData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
-                            itemStyle={{ color: 'var(--color-white)' }}
-                          />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div style={{ height: '300px', width: '100%' }}>
+                      {expenseCategoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={expenseCategoryData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {expenseCategoryData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: 'var(--color-medium-grey)', border: '1px solid var(--color-grey)' }}
+                              itemStyle={{ color: 'var(--color-white)' }}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-light-grey)' }}>
+                          No expense data available
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

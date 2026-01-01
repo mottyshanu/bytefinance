@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from '../utils/icons';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
+import { DashboardSkeleton } from '../components/Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -13,6 +14,7 @@ function PartnerDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -32,6 +34,7 @@ function PartnerDashboard() {
         return;
       }
 
+      setLoading(true);
       try {
         console.log(`Fetching partner data for ID: ${id} from ${API_URL}`);
         const [dashboardRes, txRes, catRes, clientRes] = await Promise.all([
@@ -96,6 +99,8 @@ function PartnerDashboard() {
           retainFund: { balance: 0 },
           mainAccount: { balance: 0 }
         });
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -105,9 +110,31 @@ function PartnerDashboard() {
     navigate('/login');
   };
 
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-black)', color: 'var(--color-white)' }}>
+      <nav className="responsive-nav" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '1rem 2rem', 
+        background: 'rgba(0,0,0,0.85)', 
+        backdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: '1px solid var(--color-grey)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ fontSize: '1.375rem', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+          ByteFinance <span style={{ fontWeight: 400, fontSize: '0.75em', color: 'var(--color-light-grey)' }}>Partner</span>
+        </div>
+      </nav>
+      <DashboardSkeleton />
+    </div>
+  );
+
   if (!data) return (
     <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--color-black)', color: 'var(--color-white)' }}>
-      <div>Loading Dashboard...</div>
+      <div>Failed to load dashboard data.</div>
     </div>
   );
 
