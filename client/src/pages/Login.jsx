@@ -6,7 +6,7 @@ import { Lock, User } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) 
   ? import.meta.env.VITE_API_URL 
-  : 'http://localhost:5001/api';
+  : (import.meta.env.MODE === 'production' ? 'https://bytefinance-server.vercel.app/api' : 'http://localhost:5001/api');
 
 function Login() {
   const [username, setUsername] = useState('');
