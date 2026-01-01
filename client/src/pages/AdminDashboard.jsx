@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
 import { DashboardSkeleton } from '../components/Skeleton';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -13,6 +14,7 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [clients, setClients] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -58,36 +60,45 @@ function AdminDashboard() {
 
   const handleAddCategory = async () => {
     if (!newCategory.name) return;
+    setActionLoading(true);
     try {
       await axios.post(`${API_URL}/categories`, { ...newCategory, icon: 'Circle' });
       setNewCategory({ name: '', type: 'EXPENSE' });
       setShowAddCategory(false);
-      fetchData();
+      await fetchData();
     } catch (error) {
       console.error('Error adding category:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleAddPartner = async () => {
     if (!newPartnerName) return;
+    setActionLoading(true);
     try {
       await axios.post(`${API_URL}/partners`, { name: newPartnerName });
       setNewPartnerName('');
       setShowAddPartner(false);
-      fetchData();
+      await fetchData();
     } catch (error) {
       console.error('Error adding partner:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleAddClient = async (e) => {
     e.preventDefault();
+    setActionLoading(true);
     try {
       await axios.post(`${API_URL}/clients`, { name: newClient });
       setNewClient('');
-      fetchData();
+      await fetchData();
     } catch (error) {
       console.error('Error adding client:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -96,7 +107,8 @@ function AdminDashboard() {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
+    // Only show full skeleton on initial load, not on refreshes
+    if (accounts.length === 0) setLoading(true);
     try {
       const [accRes, cliRes, partRes, txRes, drawRes, catRes] = await Promise.all([
         axios.get(`${API_URL}/accounts`),
@@ -139,6 +151,7 @@ function AdminDashboard() {
 
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
+    setActionLoading(true);
     try {
       if (transactionForm.category === 'partner_drawing') {
         // Handle Drawing
@@ -166,7 +179,7 @@ function AdminDashboard() {
       
       setEditingTransactionId(null);
       setEditingType('TRANSACTION');
-      fetchData();
+      await fetchData();
       setTransactionForm({
         type: 'EXPENSE',
         amount: '',
@@ -181,20 +194,25 @@ function AdminDashboard() {
     } catch (error) {
       console.error(error);
       alert('Failed to save transaction');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeleteTransaction = async (tx) => {
     if (!confirm('Are you sure you want to delete this transaction?')) return;
+    setActionLoading(true);
     try {
       if (tx.isDrawing) {
         await axios.delete(`${API_URL}/drawing/${tx.id}`);
       } else {
         await axios.delete(`${API_URL}/transaction/${tx.id}`);
       }
-      fetchData();
+      await fetchData();
     } catch (error) {
       alert('Failed to delete transaction');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -234,6 +252,7 @@ function AdminDashboard() {
 
   const handleDrawingSubmit = async (e) => {
     e.preventDefault();
+    setActionLoading(true);
     try {
       if (editingDrawingId) {
         await axios.put(`${API_URL}/drawing/${editingDrawingId}`, drawingForm);
@@ -241,7 +260,7 @@ function AdminDashboard() {
       } else {
         await axios.post(`${API_URL}/drawing`, drawingForm);
       }
-      fetchData();
+      await fetchData();
       setDrawingForm({
         partnerId: '',
         amount: '',
@@ -250,16 +269,21 @@ function AdminDashboard() {
       });
     } catch (error) {
       alert('Failed to save drawing');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeleteDrawing = async (id) => {
     if (!confirm('Are you sure you want to delete this drawing?')) return;
+    setActionLoading(true);
     try {
       await axios.delete(`${API_URL}/drawing/${id}`);
-      fetchData();
+      await fetchData();
     } catch (error) {
       alert('Failed to delete drawing');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -391,6 +415,7 @@ function AdminDashboard() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-black)', color: 'var(--color-white)' }}>
+      <LoadingOverlay isLoading={actionLoading} />
       {/* Header */}
       <nav className="responsive-nav" style={{ 
         display: 'flex', 
