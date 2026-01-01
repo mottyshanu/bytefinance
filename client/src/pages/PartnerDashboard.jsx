@@ -9,7 +9,7 @@ import { DashboardSkeleton } from '../components/Skeleton';
 
 const API_URL = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) 
   ? import.meta.env.VITE_API_URL 
-  : (import.meta.env.MODE === 'production' ? 'https://bytefinance-server.vercel.app/api' : 'http://localhost:5001/api');
+  : (import.meta.env.MODE === 'production' ? 'https://bytefinance-five.vercel.app/api' : 'http://localhost:5001/api');
 
 function PartnerDashboard() {
   const { id } = useParams();
