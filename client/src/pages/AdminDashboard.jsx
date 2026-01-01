@@ -8,7 +8,9 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../util
 import { DashboardSkeleton } from '../components/Skeleton';
 import LoadingOverlay from '../components/LoadingOverlay';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) 
+  ? import.meta.env.VITE_API_URL 
+  : 'http://localhost:5001/api';
 
 function AdminDashboard() {
   const navigate = useNavigate();

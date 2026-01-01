@@ -7,7 +7,9 @@ import { Icons } from '../utils/icons';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategoryLabel } from '../utils/categories';
 import { DashboardSkeleton } from '../components/Skeleton';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) 
+  ? import.meta.env.VITE_API_URL 
+  : 'http://localhost:5001/api';
 
 function PartnerDashboard() {
   const { id } = useParams();

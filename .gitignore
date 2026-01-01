@@ -8,3 +8,4 @@ server/dev.db
 server/dev.db-journal
 server/public/*
 !server/public/.gitkeep
+public
